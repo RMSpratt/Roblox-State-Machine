@@ -1,36 +1,204 @@
 # Roblox Character AI StateMachine (Luau)
 
-TBD
-
 A flat StateMachine for managing the creation of controllable characters.
-Knowledge representation uses Blackboard architectures.
-Modular and allows access to each element individually to support creating building blueprints.
+Knowledge representation is based on a Blackboard architecture.
+Design is to be modular supporting building-block component creation.
 
 This implementation uses type definition syntax supported by Luau.
-
-This implementation uses a Module-Metatable inheritance model for elements.
-A second implementation not requiring metatable inheritance will be added soon.
-
-Currently undergoing testing and debugging.
+This implementation uses a ModuleScript-Metatable model for components.
 
 ## Script Organization
 The following script organization should be maintained if importing 
 this suite into Roblox.
 
+```
 Root/
-|--State
-|--StateMachine
-|--StateTransition
-|--Blackboard
-|--Action
-|--SMTypes
-|--SMArgValidation
-|--Condition/
-   |--AndCondition
-   |--OrCondition
-   |--NotCondition
-   |--ValueCondition
+|-- State
+|-- StateMachine
+|-- StateTransition
+|-- Blackboard
+|-- Action
+|-- SMTypes
+|-- SMArgValidation
+|-- Condition/
+    |-- AndCondition
+    |-- OrCondition
+    |-- NotCondition
+    |-- ValueCondition
+```
 
-Instructions and samples for use to be added soon.
-References and explanations for StateMachine concepts to be added.
-UML diagrams will also be added to explain table structure and communication.
+## Components
+A brief explanation of each component ModuleScript is outlined below.
+These are organized from Top --> Bottom, with the larger components explained first.
+
+### StateMachine
+This represents the Agent's full encapsulated AI behaviour.
+This contains a set of States, StateTransitions, Actions, and Conditions.
+
+Agent Behaviour is defined as a set of functions returned when performing a StateMachine update.
+The GetActions method of a StateMachine returns this list of functions to execute.
+The GetActions method of a StateMachine updates the active State according to StateTransitions.
+
+When entering a StateMachine with no active State, the InitialState is entered immediately.
+
+**Note:**
+StateMachines in this framework support StateTransitions to be checked for *any* active state.
+These can be triggered multiple times so long as their Condition is continually met.
+Use these with caution to avoid accidentally repeating behaviour. (AnyStateTransitions)
+
+```lua
+type StateMachine = {
+    _Type: string,
+    AgentName: string,
+    AnyStateTransitions: {StateTransition},
+    AgentBlackboard: Blackboard,
+    CurrentState: State,
+    EntryActions: {Action},
+    ExitActions: {Action},
+    GlobalActions: {Action},
+    InitialState: State,
+    States: {State},
+    GetActions: (StateMachine) -> {Action},
+    GetName: (StateMachine) -> string,
+    SetInitialState: (StateMachine, State) -> nil,
+    SetBlackboard: (StateMachine, Blackboard) -> nil
+}
+```
+
+
+### State
+These represent repeated behaviour exhibited by AI-controlled agents.
+A set of Actions, a State's "RegularActions" are executed every StateMachine Update.
+
+```lua
+type State = {
+    _Type: string,
+    StateName: string,
+    EntryActions: {[number]: Action},
+    RegularActions: {[number]: Action},
+    ExitActions: {[number]: Action},
+    Transitions: {[number]: StateTransition},
+    AddStateTransition: (State, StateTransition) -> nil,
+} 
+```
+
+
+### StateTransition
+These represent links between an Agent's States as dynamic behaviour.
+Agent's can have at most one active StateTransition at a time.
+
+All StateTransitions are defined with a pre-created State as its Target.
+The Source State holds the StateTransition as part of its definition.
+
+A StateTransition is activated when IsTriggered evaluates to true.
+This value is determined by checking the StateTransition's sole Condition object.
+
+```lua
+type StateTransition = {
+    _Type: string,
+    TransitionActions: {[number]: Action},
+    TransitionCondition: Condition,
+    TransitionName: string,
+    TargetState: State,
+    IsTriggered: (StateTransition, Blackboard) -> boolean,
+}
+```
+
+
+### Condition
+Conditions are used in triggering a StateTransition.
+
+Conditions come in two primary categories: Aggregate and Value.
+All types of Conditions have a method, TestCondition, to evaluate if they are met.
+
+Conditions can be organized in hierarchies, creating Condition Trees.
+A StateTransition will store reference to only the 'root' Condition.
+
+```lua
+type Condition = {
+    _Type: string,
+    Name: string,
+    Parent: Condition,
+    TestCondition: (Condition, Blackboard) -> boolean
+}
+```
+
+#### ValueCondition
+ValueCondition objects are those that evaluate the truth of *one* condition by value comparison.
+The value to check is set at creation and corresponds to one found within an Agent's Blackboard.
+
+```lua
+type ValueCondition = Condition & {
+    ComparisonOperator: number,
+    ExpectedValue: any,
+    TestKey: string,
+}
+```
+
+#### AndCondition
+AndCondition objects evaluate the truthiness of two or more sub-conditions. (Aggregate)
+AndCondition objects return true iff *ALL* of the sub-conditions evaluate to true.
+
+#### OrCondition
+OrCondition objects evaluate the truthiness of two or more sub-conditions. (Aggregate)
+OrCondition objects return true iff *ANY* of the sub-conditions evaluate to true.
+
+#### NotCondition
+NotCondition objects invert the truthiness of a sub-condition.
+NotCondition objects return true iff the sub-condition evaluates to false.
+
+
+## Action
+Actions are the behaviour executed by Agents within States and StateTransitions.
+Actions correspond to a function defined outside of the StateMachine itself.
+
+**Note:**
+Action methods *must not* return values. As these values will not be consumed.
+
+```lua
+type Action = {
+    _Type: string,
+    ActionName: string,
+    ActionMethod: (...any) -> nil
+}
+```
+
+### Blackboard
+Blackboards define the full set of knowledge available to an Agent.
+Blackboards consist of {key, value} pairs and support storage of any type of value (except nil).
+
+Blackboards support knowledge sharing in a hierarchical manner.
+Blackboards can have a single Parent to query for keys not found locally.
+
+**Note:**
+Blackboards in this framework support local-value getting and setting to ignore inherited keys.
+These features are in-support of testing for missing information, but should be used carefully.
+
+```lua
+type Blackboard = {
+    _Type: string,
+    Name: string,
+    Parent: Blackboard,
+    Entries: {[string]: any},
+    AddEntry: (Blackboard, string, any) -> nil,
+    Clone: (Blackboard) -> Blackboard,
+    GetName: ( Blackboard) -> string,
+    GetValue: (Blackboard, string) -> any,
+    GetValueLocal: (Blackboard, string) -> any,
+    SetParent: (Blackboard, Blackboard) -> nil,
+    SetValue: (Blackboard, string, any) -> boolean,
+    SetValueLocal: (Blackboard, string, any) -> boolean,
+}
+```
+
+
+## Additional Notes
+- I hope to add some visual diagrams soon to illustrate how the components tie together.
+
+- I am working on an example to include with this framework.
+- I am working on an alternate implementation for StateMachine access.
+
+- StateMachine components (i.e. States) can technically be edited after creation. 
+    - This is not recommended behaviour.
+
+- A Hierarchical StateMachine framework implementation may be added in the near future.
