@@ -1,3 +1,4 @@
+--[M]odules
 local SMArgValidationMod = require(script.Parent.Parent.SMArgValidation)
 local SMTypesMod = require(script.Parent.Parent.SMTypes)
 
@@ -26,6 +27,7 @@ end
 ---@return boolean
 function OrCondition:TestCondition(agentBlackboard: SMTypesMod.Blackboard)
     self = (self :: SMTypesMod.CompoundCondition)
+
     local isMet = false
 
     SMArgValidationMod.CheckArgumentTypes(
@@ -33,7 +35,7 @@ function OrCondition:TestCondition(agentBlackboard: SMTypesMod.Blackboard)
 
     for _, subCondition: SMTypesMod.Condition in self.SubConditions do
 
-        if subCondition:TestCondition() then
+        if subCondition:TestCondition(agentBlackboard) then
             isMet = true
             break
         end

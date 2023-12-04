@@ -1,3 +1,4 @@
+--[M]odules
 local SMArgValidationMod = require(script.Parent.SMArgValidation)
 local SMTypesMod =  require(script.Parent.SMTypes)
 
@@ -6,43 +7,63 @@ local StateMachine = {}
 StateMachine.__index = StateMachine
 
 ---Create and return a new StateMachine to run Agent behaviour.
----@param agentName string
----@param initialState table
+---@param stateMachineName string
+---@param states table
 ---@param entryActions table
 ---@param globalActions table
 ---@param exitActions table
 ---@return table
-function StateMachine.New(agentName: string, initialState: SMTypesMod.State?,
-    entryActions: {[number]: SMTypesMod.Action}?, globalActions: {[number]: SMTypesMod.Action}?,
-    exitActions: {[number]: SMTypesMod.Action}?)
-
+function StateMachine.New(stateMachineName: string, states: {SMTypesMod.State},
+    blackboard: SMTypesMod.Blackboard, entryActions: {SMTypesMod.Action}?,
+    globalActions: {SMTypesMod.Action}?, exitActions: {SMTypesMod.Action}?,
+    anyStateTransitions: {SMTypesMod.StateTransition}?)
     local self = {}
 
     SMArgValidationMod.CheckArgumentTypes(
-        {'string', SMTypesMod.State, 'table', 'table', 'table'},
-        {agentName, initialState, entryActions, globalActions, exitActions},
+        {'string', SMTypesMod.Blackboard, 'table', 'table', 'table', 'table', 'table'},
+        {stateMachineName, blackboard, states, entryActions,
+        globalActions, exitActions, anyStateTransitions},
         'New', 2)
 
+    SMArgValidationMod.CheckTableValuesFixedType(SMTypesMod.State, states, 'New', 2)
+
+    if entryActions then
+        SMArgValidationMod.CheckTableValuesFixedType(SMTypesMod.Action, entryActions, 'New', 3)
+    end
+
+    if globalActions then
+        SMArgValidationMod.CheckTableValuesFixedType(SMTypesMod.Action, globalActions, 'New', 4)
+    end
+
+    if exitActions then
+        SMArgValidationMod.CheckTableValuesFixedType(SMTypesMod.Action, exitActions, 'New', 5)
+    end
+
+    if anyStateTransitions then
+        SMArgValidationMod.CheckTableValuesFixedType(
+            SMTypesMod.StateTransition, anyStateTransitions, 'New', 6)
+
+        for transitionIdx, transition in ipairs(anyStateTransitions) do
+            if not table.find(states, transition.TargetState) then
+                error(
+                    `invalid value for key 'TargetState' index #{transitionIdx}` ..
+                    ` in argument #6 to 'New'. State must be present in StateMachine.`)
+            end
+        end
+    end
+
     self._Type = SMTypesMod.StateMachine
-    self.AgentName = agentName
+    self.AgentName = stateMachineName
+    self.AgentBlackboard = blackboard
     self.AnyStateTransitions = {}
+    self.States = states
     self.EntryActions = entryActions or {}
     self.ExitActions = exitActions or {}
     self.GlobalActions = globalActions or {}
-    self.InitialState = initialState
+    self.AnyStateTransitions = anyStateTransitions or {}
     setmetatable(self, StateMachine)
 
     return self
-end
-
----Add a StateTransition capable of taking place at any State.
-function StateMachine:AddAnyStateTransition(anyTransition: SMTypesMod.StateTransition)
-    self = (self :: SMTypesMod.StateMachine)
-
-    SMArgValidationMod.CheckArgumentTypes(
-        {SMTypesMod.StateTransition}, {anyTransition}, 'AddAnyStateTransition')
-
-    table.insert(self.AnyStateTransitions, anyTransition)
 end
 
 ---Get Agent behaviour actions for the current State.
@@ -130,6 +151,7 @@ end
 ---Return the name of the agent associated with this StateMachine.
 function StateMachine:GetName()
     self = (self :: SMTypesMod.StateMachine)
+
     return self.AgentName
 end
 
@@ -147,6 +169,10 @@ function StateMachine:SetInitialState(initialState: SMTypesMod.State)
 
     SMArgValidationMod.CheckArgumentTypes(
         {SMTypesMod.State}, {initialState}, 'SetInitialState')
+
+    if not table.find(self.States, initialState) then
+        error(`argument #1 for initialState must exist within the StateMachine {self.AgentName}.`)
+    end
 
     self.InitialState = initialState
 end

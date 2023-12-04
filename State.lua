@@ -1,3 +1,4 @@
+--[M]odules
 local SMArgValidationMod = require(script.Parent.SMArgValidation)
 local SMTypesMod = require(script.Parent.SMTypes)
 
