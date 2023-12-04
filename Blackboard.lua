@@ -1,3 +1,4 @@
+--[M]odules
 local SMArgValidationMod = require(script.Parent.SMArgValidation)
 local SMTypesMod = require(script.Parent.SMTypes)
 
@@ -29,7 +30,7 @@ function Blackboard:AddEntry(entryName: string, entryValue: any)
 
     SMArgValidationMod.CheckArgumentTypes({'string', 'any'}, {entryName, entryValue}, 'AddEntry')
 
-    if self.Entries[entryName] then
+    if self.Entries[entryName]  ~= nil then
         error(
             `argument #1 to 'AddEntry' {entryName} already exists in Blackboard`)
         return
@@ -42,6 +43,7 @@ end
 ---@return table
 function Blackboard:Clone()
     self = (self :: SMTypesMod.Blackboard)
+
     local blackboardCopy = {}
 
     blackboardCopy.Name = self.Name
@@ -61,6 +63,7 @@ end
 ---@return string
 function Blackboard:GetName()
     self = (self :: SMTypesMod.Blackboard)
+
     return self.Name
 end
 
@@ -71,7 +74,7 @@ function Blackboard:GetValue(entryKey: string)
 
     SMArgValidationMod.CheckArgumentTypes({'string'}, {entryKey}, 'GetValue')
 
-    if not self.Entries[entryKey] and self.Parent then
+    if self.Entries[entryKey] == nil and self.Parent then
         return self.Parent:GetValue(entryKey)
     end
 
@@ -96,7 +99,7 @@ function Blackboard:SetValueLocal(entryKey: string, newValue: any)
     self = (self :: SMTypesMod.Blackboard)
     SMArgValidationMod.CheckArgumentTypes({'string', 'any'}, {entryKey, newValue}, 'SetValueLocal')
 
-    if self.Entries[entryKey] then
+    if self.Entries[entryKey] == nil then
         self.Entries[entryKey] = newValue
         return true
     end
@@ -108,6 +111,7 @@ end
 ---@param parent table
 function Blackboard:SetParent(parent: SMTypesMod.Blackboard)
     self = (self :: SMTypesMod.Blackboard)
+
     SMArgValidationMod.CheckArgumentTypes({SMTypesMod.Blackboard}, {parent}, 'SetParent')
     self.Parent = parent
 end
@@ -120,7 +124,7 @@ function Blackboard:SetValue(entryKey: string, newValue: any)
 
     SMArgValidationMod.CheckArgumentTypes({'string', 'any'}, {entryKey, newValue}, 'SetValue')
 
-    if self.Entries[entryKey] then
+    if self.Entries[entryKey] ~= nil then
         self.Entries[entryKey] = newValue
         return true
     end

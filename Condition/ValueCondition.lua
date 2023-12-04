@@ -1,5 +1,8 @@
+--[M]odules
 local SMArgValidationMod = require(script.Parent.Parent.SMArgValidation)
 local SMTypesMod = require(script.Parent.Parent.SMTypes)
+
+--[G]lobals
 
 --Define the set of comparison operators used for ValueCondition instances.
 local COMPARISON_OPERATORS = {
@@ -43,28 +46,37 @@ end
 ---@return boolean
 function ValueCondition:TestCondition(agentBlackboard: SMTypesMod.Blackboard)
     self = (self :: SMTypesMod.ValueCondition)
+
+    --print("Check ValueCondition for key " .. self.TestKey .. " " .. tostring(agentBlackboard:GetValue(self.TestKey)))
     local isMet = false
 
-    SMArgValidationMod.CheckArgumentTypes(
-        {SMTypesMod.Blackboard}, {agentBlackboard}, 'TestCondition')
+    local actualValue = agentBlackboard:GetValue(self.TestKey)
 
-    if self.ComparisonOperator == COMPARISON_OPERATORS.EQ then
-        isMet = (self.ExpectedValue == agentBlackboard:GetValue(self.TestKey))
+    if actualValue ~= nil then
 
-    elseif self.ComparisonOperator == COMPARISON_OPERATORS.NEQ then
-        isMet = (self.ExpectedValue ~= agentBlackboard:GetValue(self.TestKey))
+        SMArgValidationMod.CheckArgumentTypes(
+            {SMTypesMod.Blackboard}, {agentBlackboard}, 'TestCondition')
 
-    elseif self.ComparisonOperator == COMPARISON_OPERATORS.LT then
-        isMet = (self.ExpectedValue < agentBlackboard:GetValue(self.TestKey))
+        if self.ComparisonOperator == COMPARISON_OPERATORS.EQ then
+            isMet = (actualValue == self.ExpectedValue)
 
-    elseif self.ComparisonOperator == COMPARISON_OPERATORS.LTE then
-        isMet = (self.ExpectedValue <= agentBlackboard:GetValue(self.TestKey))
+        elseif self.ComparisonOperator == COMPARISON_OPERATORS.NEQ then
+            isMet = (actualValue ~= self.ExpectedValue)
 
-    elseif self.ComparisonOperator == COMPARISON_OPERATORS.GT then
-        isMet = (self.ExpectedValue > agentBlackboard:GetValue(self.TestKey))
+        elseif self.ComparisonOperator == COMPARISON_OPERATORS.LT then
+            isMet = (actualValue < self.ExpectedValue)
 
-    elseif self.ComparisonOperator == COMPARISON_OPERATORS.GTE then
-        isMet = (self.ExpectedValue >= agentBlackboard:GetValue(self.TestKey))
+        elseif self.ComparisonOperator == COMPARISON_OPERATORS.LTE then
+            isMet = (actualValue <= self.ExpectedValue)
+
+        elseif self.ComparisonOperator == COMPARISON_OPERATORS.GT then
+            isMet = (actualValue > self.ExpectedValue)
+
+        elseif self.ComparisonOperator == COMPARISON_OPERATORS.GTE then
+            isMet = (actualValue >= self.ExpectedValue)
+        end
+    else
+        warn(`Requested key {self.TestKey} is not defined in Blackboard {agentBlackboard.Name}.`)
     end
 
     return isMet
