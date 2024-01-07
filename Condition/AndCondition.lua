@@ -8,14 +8,16 @@ AndCondition.__index = AndCondition
 
 ---Create and return a new AndCondition.
 ---@param subconditions table
+---@param conditionName string
 ---@return table
-function AndCondition.New(subconditions: {[number]: SMTypesMod.Condition})
+function AndCondition.New(subconditions: {[number]: SMTypesMod.Condition}, conditionName: string?)
     local self = {}
 
     SMArgValidationMod.CheckArgumentTypes({'table'}, {subconditions}, 'New')
     SMArgValidationMod.CheckTableValuesFixedType(SMTypesMod.Condition, subconditions, 'New', 1)
 
     self._Type = SMTypesMod.Condition
+    self.Name = conditionName
     self.SubConditions = subconditions
     setmetatable(self, AndCondition)
 
@@ -27,6 +29,7 @@ end
 ---@return boolean
 function AndCondition:TestCondition(agentBlackboard: SMTypesMod.Blackboard)
     self = (self :: SMTypesMod.CompoundCondition)
+
     local isMet = true
 
     SMArgValidationMod.CheckArgumentTypes(
@@ -34,7 +37,7 @@ function AndCondition:TestCondition(agentBlackboard: SMTypesMod.Blackboard)
 
     for _, subCondition: SMTypesMod.Condition in self.SubConditions do
 
-        if not subCondition:TestCondition() then
+        if not subCondition:TestCondition(agentBlackboard) then
             isMet = false
             break
         end

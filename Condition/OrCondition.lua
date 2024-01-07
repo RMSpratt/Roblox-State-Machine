@@ -8,14 +8,16 @@ OrCondition.__index = OrCondition
 
 ---Create and return a new AndCondition.
 ---@param subconditions table
+---@param conditionName string
 ---@return table
-function OrCondition.New(subconditions: {[number]: SMTypesMod.Condition})
+function OrCondition.New(subconditions: {[number]: SMTypesMod.Condition}, conditionName: string?)
     local self = {}
 
     SMArgValidationMod.CheckArgumentTypes({'table'}, {subconditions}, 'New')
     SMArgValidationMod.CheckTableValuesFixedType(SMTypesMod.Condition, subconditions, 'New', 1)
 
     self._Type = SMTypesMod.Condition
+    self.Name = conditionName
     self.SubConditions = subconditions
     setmetatable(self, OrCondition)
 

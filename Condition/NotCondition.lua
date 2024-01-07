@@ -8,15 +8,18 @@ NotCondition.__index = NotCondition
 
 ---Create and return a new NotCondition.
 ---@param subcondition table
+---@param conditionName string
 ---@return table
-function NotCondition.New(subcondition: SMTypesMod.Condition)
+function NotCondition.New(subcondition: SMTypesMod.Condition, conditionName: string?)
     local self = {}
 
     SMArgValidationMod.CheckArgumentTypes({SMTypesMod.Condition}, {subcondition}, 'New')
-    self._Type = SMTypesMod.Condition
-    setmetatable(self, NotCondition)
 
-    table.insert(self.SubConditions, subcondition)
+    self._Type = SMTypesMod.Condition
+    self.Name = conditionName
+    self.SubConditions = {subcondition}
+
+    setmetatable(self, NotCondition)
 
     return self
 end
@@ -30,7 +33,7 @@ function NotCondition:TestCondition(agentBlackboard: SMTypesMod.Blackboard)
     SMArgValidationMod.CheckArgumentTypes(
         {SMTypesMod.Blackboard}, {agentBlackboard}, 'TestCondition')
 
-    return not self.SubConditions[1]:TestCondition()
+    return not self.SubConditions[1]:TestCondition(agentBlackboard)
 end
 
 return NotCondition
