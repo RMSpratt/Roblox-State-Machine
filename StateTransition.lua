@@ -1,4 +1,3 @@
---[M]odules
 local SMArgValidationMod = require(script.Parent.SMArgValidation)
 local SMTypesMod = require(script.Parent.SMTypes)
 
@@ -16,11 +15,11 @@ function StateTransition.New(targetState: SMTypesMod.State, transitionCondition:
     local self = {}
 
     SMArgValidationMod.CheckArgumentTypes(
-        {SMTypesMod.State, SMTypesMod.Condition, SMTypesMod.Action, 'string'},
+        {SMTypesMod.State, SMTypesMod.Condition, 'table', 'string'},
         {targetState, transitionCondition, transitionActions, transitionName}, 'New', 3)
 
     self._Type = SMTypesMod.StateTransition
-    self.TransitionActions = {}
+    self.TransitionActions = transitionActions or {}
     self.TransitionCondition = transitionCondition
     self.TransitionName = transitionName or `to_{targetState.StateName}`
     self.TargetState = targetState
