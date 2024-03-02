@@ -1,31 +1,44 @@
+local SMTypesMod = require(script.Parent.SMTypes)
+
+local SM_TYPE_MAP = {
+    [SMTypesMod.Action] = 'Action',
+    [SMTypesMod.Blackboard] = 'Blackboard',
+    [SMTypesMod.Condition] = 'Condition',
+    [SMTypesMod.State] = 'State',
+    [SMTypesMod.StateMachine] = 'StateMachine',
+    [SMTypesMod.StateTransition] = 'StateTransition',
+}
+
+setmetatable(SM_TYPE_MAP, {__index = function(_, key) return key end})
+
 --Utility functions used for type checking arguments provided for StateMachine elements.
 local SMArgValidation = {}
 
 ---Check a set of expected argument types against those received.
 ---Modified to work with SMType type definitions.
----@param expectedArgs table
----@param funcArgs table
----@param funcName string
----@param optionalIdx number
-function SMArgValidation.CheckArgumentTypes(expectedArgs: {[number]: string},
+---@param expectedArgTypes table The ordered set of expected argument types to the function.
+---@param funcArgs table The actual set of arguments received by the function.
+---@param funcName string The name of the function being validated.
+---@param optionalIdx number The inclusive index for arguments to then be considered optional.
+function SMArgValidation.CheckArgumentTypes(expectedArgTypes: {[number]: string},
     funcArgs: {[number]: any}, funcName: string, optionalIdx: number?)
 
-    optionalIdx = optionalIdx or #expectedArgs + 1
+    optionalIdx = optionalIdx or #expectedArgTypes + 1
 
-    if #funcArgs > #expectedArgs then
+    if #funcArgs > #expectedArgTypes then
         error(`wrong number of arguments to '{funcName}'`, 2)
     end
 
-    for varIdx, expectedType in ipairs(expectedArgs) do
+    for varIdx, expectedType in ipairs(expectedArgTypes) do
         local actualType = type(funcArgs[varIdx]) == 'table' and funcArgs[varIdx]._Type
             or type(funcArgs[varIdx])
 
-        if varIdx < optionalIdx and not funcArgs[varIdx] then
-            error(`missing argument #{varIdx} to '{funcName}' ({expectedType} expected)`, 2)
+        if varIdx < optionalIdx and funcArgs[varIdx] == nil then
+            error(`missing argument #{varIdx} to '{funcName}' ({SM_TYPE_MAP[expectedType]} expected)`, 2)
         end
 
         if funcArgs[varIdx] ~= nil and expectedType ~= "any" and actualType ~= expectedType then
-            error(`invalid argument #{varIdx} to '{funcName}' ({expectedArgs[varIdx]} expected, got {actualType})`, 2)
+            error(`invalid argument #{varIdx} to '{funcName}' ({SM_TYPE_MAP[expectedType]} expected, got {actualType})`, 2)
         end
     end
 end
@@ -45,12 +58,12 @@ function SMArgValidation.CheckTableKeyValueTypes(expectedTypePairs: {[any]: stri
 
         if argTable[expectedKey] == nil then
             error(`missing key '{expectedKey}' in argument #{argumentIdx}` ..
-                ` to '{funcName}' ({expectedType} expected)`)
+                ` to '{funcName}' ({SM_TYPE_MAP[expectedType]} expected)`)
         end
 
         if expectedType ~= "any" and expectedType ~= actualType then
             error(`invalid value for key '{expectedKey}' in argument #{argumentIdx}` ..
-                ` to '{funcName}' ({expectedType} expected, got {actualType})`)
+                ` to '{funcName}' ({SM_TYPE_MAP[expectedType]} expected, got {actualType})`)
         end
     end
 end
@@ -75,7 +88,7 @@ function SMArgValidation.CheckTableValuesFixedType(expectedType: string,
 
         if actualType ~= expectedType then
             error(`invalid value for key '{argIdx}' in argument #{argumentIdx}` ..
-                ` to '{funcName}' ({expectedType} expected, got {actualType})`)
+                ` to '{funcName}' ({SM_TYPE_MAP[expectedType]} expected, got {actualType})`)
         end
     end
 end
