@@ -37,9 +37,9 @@ This contains a set of States, StateTransitions, Actions, and Conditions.
 
 Agent Behaviour is defined as a set of functions returned when performing a StateMachine update.
 The GetActions method of a StateMachine returns this list of functions to execute.
-The GetActions method of a StateMachine updates the active State according to StateTransitions.
+The GetActions method of a StateMachine also updates an active State according to StateTransitions.
 
-When entering a StateMachine with no active State, the InitialState is entered immediately.
+When entering a StateMachine without an active State, its InitialState is entered by default.
 
 **Note:**
 StateMachines in this framework support StateTransitions to be checked for *any* active state.
@@ -60,9 +60,14 @@ type StateMachine = {
     States: {State},
     GetActions: (StateMachine) -> {Action},
     GetName: (StateMachine) -> string,
+}
+```
+
+The StateMachine Module contains two methods for editing StateMachines after creation.
+
+```lua
     SetInitialState: (StateMachine, State) -> nil,
     SetBlackboard: (StateMachine, Blackboard) -> nil
-}
 ```
 
 
@@ -80,6 +85,12 @@ type State = {
     Transitions: {[number]: StateTransition},
     AddStateTransition: (State, StateTransition) -> nil,
 } 
+```
+
+The State Module contains one method for editing States after creation to facilitate the process.
+
+```lua
+    AddStateTransition: (State, StateTransition) -> nil,
 ```
 
 
@@ -149,11 +160,11 @@ NotCondition objects return true iff the sub-condition evaluates to false.
 
 
 ## Action
-Actions are the behaviour executed by Agents within States and StateTransitions.
+Actions are behaviours executed by Agents within States and StateTransitions.
 Actions correspond to a function defined outside of the StateMachine itself.
 
 **Note:**
-Action methods *must not* return values. As these values will not be consumed.
+Action methods *must not* return values. Returned values are not used or considered.
 
 ```lua
 type Action = {
@@ -193,8 +204,32 @@ type Blackboard = {
 
 
 ## Additional Notes
-- I hope to add some visual diagrams soon to illustrate how the components tie together.
 
+### Implementation Quirks
+
+#### Extending Behaviour
+While the StateMachine components can be modified after creation through direct key-value access,
+this can easily lead to an invalid StateMachine if not done with caution.
+
+Dynamic behaviour for an individual State Machine is intended through setting values of an 
+Agent's Blackboard at run-time.
+
+More sophisticated behaviours for Agents is recommended by instead extending behaviour, i.e.
+- Defining a Hierarchical State Machine
+- Using a higher-level Hierarchical Task Planner
+- Using a Behaviour Tree within States
+- etc.
+
+#### Type Definitions
+The approach for type definitions in this framework has a unified source for type access (SMTypes).
+(Instead of using setmetatable for type definitions within each Module).
+
+This was done to help prevent excessive Module requirements among StateMachine components, while
+still supporting type inference and to satisfy strict type checking.
+
+
+### Wishlist (Features)
+- I hope to add some visual diagrams soon to illustrate how the components tie together.
 - I am working on an example to include with this framework.
 - I am working on an alternate implementation for StateMachine access.
 
