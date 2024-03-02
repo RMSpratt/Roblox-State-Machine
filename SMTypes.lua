@@ -59,7 +59,6 @@ export type State = {
     RegularActions: {[number]: Action},
     ExitActions: {[number]: Action},
     Transitions: {[number]: StateTransition},
-    AddStateTransition: (State, StateTransition) -> nil,
 }
 
 --Defines a StateTransition instance within an Agent StateMachine and attached to a State.
@@ -76,7 +75,7 @@ export type StateTransition = {
 export type ValueCondition = Condition & {
     ComparisonOperator: number,
     ExpectedValue: any,
-    TestKey: string,
+    ConditionKey: string,
 }
 
 return {

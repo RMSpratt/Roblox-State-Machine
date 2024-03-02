@@ -1,21 +1,18 @@
---[M]odules
 local SMArgValidationMod = require(script.Parent.SMArgValidation)
 local SMTypesMod = require(script.Parent.SMTypes)
 
----Represents a State within the StateMachine. This is a stable behaviour for the Agent.
+---Represents a State within the StateMachine. Encompasses some stable behaviour for the Agent.
 local State = {}
 State.__index = State
 
 ---Create and return a new State.
----@param stateName string
----@param entryActions table
----@param regActions table
----@param exitActions table
+---@param stateName string A visual identifier for the State object.
+---@param entryActions table The set of Action methods to invoke once when entering the State.
+---@param regActions table The set of Action methods to invoke while present within the State.
+---@param exitActions table The set of Action methods to invoke once when exiting the State.
 ---@return table
 function State.New(stateName: string, entryActions: {[number]: SMTypesMod.Action}?,
     regActions: {[number]: SMTypesMod.Action}?, exitActions: {[number]: SMTypesMod.Action}?)
-
-    local self = {}
 
     SMArgValidationMod.CheckArgumentTypes(
         {'string', 'table', 'table', 'table'},
@@ -37,26 +34,26 @@ function State.New(stateName: string, entryActions: {[number]: SMTypesMod.Action
             SMTypesMod.Action, exitActions, 'New', 4)
     end
 
-    self._Type = SMTypesMod.State
-    self.StateName = stateName
-    self.EntryActions = entryActions or {}
-    self.RegularActions = regActions or {}
-    self.ExitActions = exitActions or {}
-    self.Transitions = {}
-    setmetatable(self, State)
+    local self: SMTypesMod.State = {
+        _Type = SMTypesMod.State,
+        StateName = stateName,
+        EntryActions = entryActions or {},
+        RegularActions = regActions or {},
+        ExitActions = exitActions or {},
+        Transitions = {},
+    }
 
     return self
 end
 
----Add a new StateTransition to the State.
----@param newTransition table
-function State:AddStateTransition(newTransition: SMTypesMod.StateTransition)
-    self = (self :: SMTypesMod.State)
+---Add a new StateTransition that leads out of the passed State.
+---@param exitTransition table The exiting StatTransition.
+function State.AddStateTransition(state: SMTypesMod.State, exitTransition: SMTypesMod.StateTransition)
 
     SMArgValidationMod.CheckArgumentTypes(
-        {SMTypesMod.StateTransition}, {newTransition}, 'AddStateTransition')
+        {SMTypesMod.StateTransition}, {exitTransition}, 'AddStateTransition')
 
-    table.insert(self.Transitions, newTransition)
+    table.insert(state.Transitions, exitTransition)
 end
 
 return State
