@@ -1,4 +1,3 @@
---[M]odules
 local SMArgValidationMod = require(script.Parent.SMArgValidation)
 local SMTypesMod = require(script.Parent.SMTypes)
 
@@ -6,17 +5,17 @@ local SMTypesMod = require(script.Parent.SMTypes)
 local Action = {}
 
 ---Create and return a new Action instance.
----@param actionName string
+---@param actionName string A visual identifier for the Action's functional behaviour.
 ---@param actionMethod function
 ---@return table
 function Action.New(actionName: string, actionMethod: (...any) -> nil)
-    local self = {}
-
     SMArgValidationMod.CheckArgumentTypes({'string', 'function'}, {actionName, actionMethod}, 'New')
 
-    self._Type = SMTypesMod.Action
-    self.ActionName = actionName
-    self.ActionMethod = actionMethod
+    local self: SMTypesMod.Action = {
+        _Type = SMTypesMod.Action,
+        ActionName = actionName,
+        ActionMethod = actionMethod
+    }
 
     return self
 end
