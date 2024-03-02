@@ -1,4 +1,3 @@
---[M]odules
 local SMArgValidationMod = require(script.Parent.SMArgValidation)
 local SMTypesMod = require(script.Parent.SMTypes)
 
@@ -7,24 +6,33 @@ local Blackboard = {}
 Blackboard.__index = Blackboard
 
 ---Create and return a new Blackboard
----@param blackboardName string
+---@param blackboardName string A visual identifier for the Blackboard object.
 ---@return table
 function Blackboard.New(blackboardName: string)
-    local self = {}
-
     SMArgValidationMod.CheckArgumentTypes({'string'}, {blackboardName}, 'New')
 
-    self._Type = SMTypesMod.Blackboard
-    self.Name = blackboardName
-    self.Entries = {}
-    setmetatable(self, Blackboard)
+    --Direct assignment is used to match the type definition and allow type inference on return
+    local self: SMTypesMod.Blackboard = {
+        _Type = SMTypesMod.Blackboard,
+        Name = blackboardName,
+        Entries = {},
+        Parent = nil,
+        AddEntry = Blackboard.AddEntry,
+        Clone = Blackboard.Clone,
+        GetName = Blackboard.Clone,
+        GetValue = Blackboard.GetValue,
+        GetValueLocal = Blackboard.GetValueLocal,
+        SetValue = Blackboard.SetValue,
+        SetValueLocal = Blackboard.SetValueLocal,
+        SetParent = Blackboard.SetParent,
+    }
 
     return self
 end
 
 ---Add a BlackboardEntry to the Blackboard.
----@param entryName string
----@param entryValue any
+---@param entryName string The key (name) for the BlackboardEntry to be added.
+---@param entryValue any The value for the BlackboardEntry to be added.
 function Blackboard:AddEntry(entryName: string, entryValue: any)
     self = (self :: SMTypesMod.Blackboard)
 
@@ -44,11 +52,11 @@ end
 function Blackboard:Clone()
     self = (self :: SMTypesMod.Blackboard)
 
-    local blackboardCopy = {}
-
-    blackboardCopy.Name = self.Name
-    blackboardCopy.Parent = self.Parent
-    blackboardCopy.Entries = {}
+    local blackboardCopy = {
+        Name = self.Name,
+        Parent = self.Parent,
+        Entries = {}
+    }
 
     for entryKey, entryValue in self.Entries do
         blackboardCopy.Entries[entryKey] = entryValue
@@ -82,7 +90,6 @@ function Blackboard:GetValue(entryKey: string)
 end
 
 ---Get a value within this Blackboard. Does not search upwards.
----Not recommended but can be used for debugging.
 ---@param entryKey string
 function Blackboard:GetValueLocal(entryKey: string)
     self = (self :: SMTypesMod.Blackboard)
@@ -92,7 +99,6 @@ function Blackboard:GetValueLocal(entryKey: string)
 end
 
 ---Set a value within this Blackboard for an existing entry. Does not search upward.
----Not recommended but can be used for debugging.
 ---@param entryKey string
 ---@param newValue any
 function Blackboard:SetValueLocal(entryKey: string, newValue: any)
@@ -107,7 +113,7 @@ function Blackboard:SetValueLocal(entryKey: string, newValue: any)
     return false
 end
 
----Set the Blackboard's parent to allow inheriting keys.
+---Set the parent Blackboard object to be referenced for BlackboardEntry lookup.
 ---@param parent table
 function Blackboard:SetParent(parent: SMTypesMod.Blackboard)
     self = (self :: SMTypesMod.Blackboard)
@@ -117,8 +123,8 @@ function Blackboard:SetParent(parent: SMTypesMod.Blackboard)
 end
 
 ---Set a value within the Blackboard hierarchy for an existing entry.
----@param entryKey string
----@param newValue any
+---@param entryKey string The key (name) of the BlackboardEntry to modify or create.
+---@param newValue any The new value for the BlackboardEntry specified.
 function Blackboard:SetValue(entryKey: string, newValue: any)
     self = (self :: SMTypesMod.Blackboard)
 
