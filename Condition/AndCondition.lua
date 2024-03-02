@@ -1,4 +1,3 @@
---[M]odules
 local SMArgValidationMod = require(script.Parent.Parent.SMArgValidation)
 local SMTypesMod = require(script.Parent.Parent.SMTypes)
 
@@ -7,30 +6,31 @@ local AndCondition = {}
 AndCondition.__index = AndCondition
 
 ---Create and return a new AndCondition.
----@param subconditions table
----@param conditionName string
+---@param subconditions table The set of individual Condition objects to be satisifed.
+---@param conditionName string A visual identifier for this Condition.
 ---@return table
 function AndCondition.New(subconditions: {[number]: SMTypesMod.Condition}, conditionName: string?)
-    local self = {}
-
     SMArgValidationMod.CheckArgumentTypes({'table'}, {subconditions}, 'New')
     SMArgValidationMod.CheckTableValuesFixedType(SMTypesMod.Condition, subconditions, 'New', 1)
 
-    self._Type = SMTypesMod.Condition
-    self.Name = conditionName
-    self.SubConditions = subconditions
-    setmetatable(self, AndCondition)
+    --Direct assignment is used to match the type definition and allow type inference on return
+    local self: SMTypesMod.CompoundCondition = {
+        _Type = SMTypesMod.Condition,
+        Name = conditionName,
+        SubConditions = subconditions,
+        TestCondition = AndCondition.TestCondition
+    }
 
     return self
 end
 
 ---Test the Compound Condition and any sub-conditions. Return true if all are met.
----@param agentBlackboard table
+---@param agentBlackboard table The Blackboard object defining the Agent's knowledge.
 ---@return boolean
 function AndCondition:TestCondition(agentBlackboard: SMTypesMod.Blackboard)
     self = (self :: SMTypesMod.CompoundCondition)
 
-    local isMet = true
+    local isConditionMet = true
 
     SMArgValidationMod.CheckArgumentTypes(
         {SMTypesMod.Blackboard}, {agentBlackboard}, 'TestCondition')
@@ -38,12 +38,12 @@ function AndCondition:TestCondition(agentBlackboard: SMTypesMod.Blackboard)
     for _, subCondition: SMTypesMod.Condition in self.SubConditions do
 
         if not subCondition:TestCondition(agentBlackboard) then
-            isMet = false
+            isConditionMet = false
             break
         end
     end
 
-    return isMet
+    return isConditionMet
 end
 
 return AndCondition

@@ -1,4 +1,3 @@
---[M]odules
 local SMArgValidationMod = require(script.Parent.Parent.SMArgValidation)
 local SMTypesMod = require(script.Parent.Parent.SMTypes)
 
@@ -7,19 +6,19 @@ local NotCondition = {}
 NotCondition.__index = NotCondition
 
 ---Create and return a new NotCondition.
----@param subcondition table
+---@param subcondition table The Condition object to be satisifed.
 ---@param conditionName string
 ---@return table
 function NotCondition.New(subcondition: SMTypesMod.Condition, conditionName: string?)
-    local self = {}
-
     SMArgValidationMod.CheckArgumentTypes({SMTypesMod.Condition}, {subcondition}, 'New')
 
-    self._Type = SMTypesMod.Condition
-    self.Name = conditionName
-    self.SubConditions = {subcondition}
-
-    setmetatable(self, NotCondition)
+    --Direct assignment is used to match the type definition and allow type inference on return
+    local self: SMTypesMod.CompoundCondition = {
+        _Type = SMTypesMod.Condition,
+        Name = conditionName,
+        SubConditions = {subcondition},
+        TestCondition = NotCondition.TestCondition
+    }
 
     return self
 end
