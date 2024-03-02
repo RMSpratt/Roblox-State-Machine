@@ -1,4 +1,3 @@
---[M]odules
 local SMArgValidationMod = require(script.Parent.SMArgValidation)
 local SMTypesMod =  require(script.Parent.SMTypes)
 
@@ -7,17 +6,19 @@ local StateMachine = {}
 StateMachine.__index = StateMachine
 
 ---Create and return a new StateMachine to run Agent behaviour.
----@param stateMachineName string
----@param states table
----@param entryActions table
----@param globalActions table
----@param exitActions table
+---@param states table The set of State objects that exist within the StateMachine.
+---@param blackboard table The Blackboard object defining the Agent's knowledge.
+---@param stateMachineName string A visual identifier for the Agent StateMachine.
+---@param initialState table The entrypoint State for the StateMachine.
+---@param entryActions table The set of Action methods to invoke once when entering the StateMachine.
+---@param globalActions table The set of Action methods to invoke while present within the StateMachine.
+---@param exitActions table The set of Action methods to invoke once when exiting the StateMachine.
+---@param anyStateTransitions table The set of StateTransitions checked while in the StateMachine.
 ---@return table
-function StateMachine.New(stateMachineName: string, states: {SMTypesMod.State},
-    blackboard: SMTypesMod.Blackboard, entryActions: {SMTypesMod.Action}?,
-    globalActions: {SMTypesMod.Action}?, exitActions: {SMTypesMod.Action}?,
+function StateMachine.New(states: {SMTypesMod.State}, blackboard: SMTypesMod.Blackboard,
+    stateMachineName: string, initialState: SMTypesMod.State, entryActions: {SMTypesMod.Action}?,
+    globalActions: {SMTypesMod.Action}?,exitActions: {SMTypesMod.Action}?,
     anyStateTransitions: {SMTypesMod.StateTransition}?)
-    local self = {}
 
     SMArgValidationMod.CheckArgumentTypes(
         {'string', SMTypesMod.Blackboard, 'table', 'table', 'table', 'table', 'table'},
@@ -52,16 +53,22 @@ function StateMachine.New(stateMachineName: string, states: {SMTypesMod.State},
         end
     end
 
-    self._Type = SMTypesMod.StateMachine
-    self.AgentName = stateMachineName
-    self.AgentBlackboard = blackboard
-    self.AnyStateTransitions = {}
-    self.States = states
-    self.EntryActions = entryActions or {}
-    self.ExitActions = exitActions or {}
-    self.GlobalActions = globalActions or {}
-    self.AnyStateTransitions = anyStateTransitions or {}
-    setmetatable(self, StateMachine)
+    local self: SMTypesMod.StateMachine = {
+            _Type = SMTypesMod.StateMachine,
+            AgentName = stateMachineName,
+            AgentBlackboard = blackboard,
+            AnyStateTransitions = anyStateTransitions or {},
+            CurrentState = nil,
+            InitialState = nil,
+            States = states,
+            EntryActions = entryActions or {},
+            ExitActions = exitActions or {},
+            GlobalActions = globalActions or {},
+            GetActions = StateMachine.GetActions,
+            GetName = StateMachine.GetName
+        }
+
+    StateMachine.SetInitialState(self, initialState)
 
     return self
 end
@@ -155,26 +162,26 @@ function StateMachine:GetName()
     return self.AgentName
 end
 
----Set the Blackboard to be used by the StateMachine for checking Conditions.
----@param agentBlackboard table
-function StateMachine:SetBlackboard(agentBlackboard: SMTypesMod.Blackboard)
-    self = (self :: SMTypesMod.StateMachine)
-    self.AgentBlackboard = agentBlackboard
+---Sets the Blackboard object defining the StateMachine's source of knowledge.
+---@param agentSM table The StateMachine to be modified.
+---@param agentBlackboard table The Blackboard object defining the Agent's knowledge.
+function StateMachine.SetBlackboard(agentSM: SMTypesMod.StateMachine, agentBlackboard: SMTypesMod.Blackboard)
+    agentSM.AgentBlackboard = agentBlackboard
 end
 
----Set the initial state or entry state for this StateMachine.
----@param initialState table
-function StateMachine:SetInitialState(initialState: SMTypesMod.State)
-    self = (self :: SMTypesMod.StateMachine)
+---Sets the Initial State for the StateMachine.
+---@param agentSM table The StateMachine to be modified.
+---@param initialState table The State immediately entered for new entry to this StateMachine.
+function StateMachine.SetInitialState(agentSM: SMTypesMod.StateMachine, initialState: SMTypesMod.State)
 
     SMArgValidationMod.CheckArgumentTypes(
         {SMTypesMod.State}, {initialState}, 'SetInitialState')
 
-    if not table.find(self.States, initialState) then
-        error(`argument #1 for initialState must exist within the StateMachine {self.AgentName}.`)
+    if not table.find(agentSM.States, initialState) then
+        error(`argument #1 for initialState must exist within the StateMachine {agentSM.AgentName}.`)
     end
 
-    self.InitialState = initialState
+    agentSM.InitialState = initialState
 end
 
 return StateMachine

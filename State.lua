@@ -47,7 +47,8 @@ function State.New(stateName: string, entryActions: {[number]: SMTypesMod.Action
 end
 
 ---Add a new StateTransition that leads out of the passed State.
----@param exitTransition table The exiting StatTransition.
+---@param state The State to modify.
+---@param exitTransition table The exiting StateTransition.
 function State.AddStateTransition(state: SMTypesMod.State, exitTransition: SMTypesMod.StateTransition)
 
     SMArgValidationMod.CheckArgumentTypes(

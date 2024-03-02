@@ -47,8 +47,6 @@ export type StateMachine = {
     States: {State},
     GetActions: (StateMachine) -> {Action},
     GetName: (StateMachine) -> string,
-    SetInitialState: (StateMachine, State) -> nil,
-    SetBlackboard: (StateMachine, Blackboard) -> nil
 }
 
 --Defines a State instance within an Agent StateMachine.
