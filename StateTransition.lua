@@ -6,29 +6,30 @@ local StateTransition = {}
 StateTransition.__index = StateTransition
 
 ---Create and return a new StateTransition instance
----@param targetState table The destination State when this StateTransition is triggered
----@param transitionCondition table The Condition that must be met for the transition to fire
----@param transitionActions table The list of Actions that are executed when the Transition's Condition is Met
----@param transitionName string An identifier for the transition's purpose
+---@param targetState table The destination State for this StateTransition.
+---@param transitionCondition table The Condition that must be satisfied for the Transition to Activate.
+---@param transitionActions table The Action methods to execute when the Transition is Activated.
+---@param transitionName string A visual identifier for the StateTransition object.
 ---@return table
 function StateTransition.New(targetState: SMTypesMod.State, transitionCondition: SMTypesMod.Condition, transitionActions: {SMTypesMod.Action}?, transitionName: string?)
-    local self = {}
-
     SMArgValidationMod.CheckArgumentTypes(
         {SMTypesMod.State, SMTypesMod.Condition, 'table', 'string'},
-        {targetState, transitionCondition, transitionActions, transitionName}, 'New', 3)
+        {targetState, transitionCondition, transitionActions, transitionName}, 'New')
 
-    self._Type = SMTypesMod.StateTransition
-    self.TransitionActions = transitionActions or {}
-    self.TransitionCondition = transitionCondition
-    self.TransitionName = transitionName or `to_{targetState.StateName}`
-    self.TargetState = targetState
-    setmetatable(self, StateTransition)
+    --Direct assignment is used to match the type definition and allow type inference on return
+    local self: SMTypesMod.StateTransition = {
+        _Type = SMTypesMod.StateTransition,
+        TransitionActions = transitionActions,
+        TransitionCondition = transitionCondition,
+        TransitionName =  transitionName,
+        TargetState = targetState,
+        IsTriggered = StateTransition.IsTriggered
+    }
 
     return self
 end
 
----Check this state's transition and see if its condition has been met.
+---Evaluate the Condition tied to this StateTransition and return its satisfied truth value.
 ---@return boolean
 function StateTransition:IsTriggered(agentBlackboard: SMTypesMod.Blackboard)
     self = (self :: SMTypesMod.StateTransition)
